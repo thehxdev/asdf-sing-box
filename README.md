@@ -32,11 +32,18 @@ sing-box:
 # Show all installable versions
 asdf list-all sing-box
 
-# Install specific version
+# Install latest stable version
 asdf install sing-box latest
 
-# Set a version globally (on your ~/.tool-versions file)
+# Install specific version
+# First, get all versions with `asdf list-all sing-box` command
+asdf install sing-box <version>
+
+# Set stable version globally (on your ~/.tool-versions file)
 asdf global sing-box latest
+
+# Set specific version globally (on your ~/.tool-versions file)
+asdf global sing-box <version>
 
 # Now sing-box commands are available
 sing-box --help
