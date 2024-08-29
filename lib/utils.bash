@@ -2,22 +2,23 @@
 
 set -euo pipefail
 
-# TODO: Ensure this is the correct GitHub homepage where releases can be downloaded for sing-box.
-GH_REPO="https://github.com/sagernet/sing-box"
+source "${plugin_dir}/lib/logging.bash"
+
+GH_ORG_REPO="sagernet/sing-box"
+GH_REPO="https://github.com/$GH_ORG_REPO"
 TOOL_NAME="sing-box"
 TOOL_TEST="sing-box --help"
 
 fail() {
-	echo -e "asdf-$TOOL_NAME: $*"
+	log_error "asdf-$TOOL_NAME: $*"
 	exit 1
 }
 
 curl_opts=(-fsSL)
 
-# NOTE: You might want to remove this if sing-box is not hosted on GitHub releases.
-if [ -n "${GITHUB_API_TOKEN:-}" ]; then
-	curl_opts=("${curl_opts[@]}" -H "Authorization: token $GITHUB_API_TOKEN")
-fi
+# if [ -n "${GITHUB_API_TOKEN:-}" ]; then
+# 	curl_opts=("${curl_opts[@]}" -H "Authorization: token $GITHUB_API_TOKEN")
+# fi
 
 sort_versions() {
 	sed 'h; s/[+-]/./g; s/.p\([[:digit:]]\)/.z\1/; s/$/.z/; G; s/\n/ /' |
@@ -30,22 +31,25 @@ list_github_tags() {
 		sed 's/^v//' # NOTE: You might want to adapt this sed to remove non-version strings from tags
 }
 
+list_github_api_versions() {
+	curl -s "https://api.github.com/repos/$GH_ORG_REPO/releases" | jq 'map(.name).[]' | tr -d '"'
+}
+
 list_all_versions() {
-	# TODO: Adapt this. By default we simply list the tag names from GitHub releases.
-	# Change this function if sing-box has other means of determining installable versions.
-	list_github_tags
+	# list_github_tags
+	list_github_api_versions
 }
 
 download_release() {
 	local version filename url
-	version="$1"
-	filename="$2"
+	filename="$1"
+	output_path="$2"
 
-	# TODO: Adapt the release URL convention for sing-box
-	url="$GH_REPO/archive/v${version}.tar.gz"
+	# url="$GH_REPO/archive/v${version}.tar.gz"
+	url="$GH_REPO/releases/$filename"
 
-	echo "* Downloading $TOOL_NAME release $version..."
-	curl "${curl_opts[@]}" -o "$filename" -C - "$url" || fail "Could not download $url"
+	log_info "* Downloading $TOOL_NAME release $filename..."
+	curl "${curl_opts[@]}" -o "$output_path" -C - "$url" || fail "Could not download $url"
 }
 
 install_version() {
@@ -61,9 +65,10 @@ install_version() {
 		mkdir -p "$install_path"
 		cp -r "$ASDF_DOWNLOAD_PATH"/* "$install_path"
 
-		# TODO: Assert sing-box executable exists.
+		# Assert sing-box executable exists.
 		local tool_cmd
-		tool_cmd="$(echo "$TOOL_TEST" | cut -d' ' -f1)"
+		# tool_cmd="$(echo "$TOOL_TEST" | cut -d' ' -f1)"
+		tool_cmd="sing-box"
 		test -x "$install_path/$tool_cmd" || fail "Expected $install_path/$tool_cmd to be executable."
 
 		echo "$TOOL_NAME $version installation was successful!"
