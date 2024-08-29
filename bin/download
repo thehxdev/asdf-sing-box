@@ -11,9 +11,22 @@ source "${plugin_dir}/lib/logging.bash"
 
 mkdir -p "$ASDF_DOWNLOAD_PATH"
 
-# Adapt this to proper extension and adapt extracting strategy.
 ARCH=$(uname -m)
-filename="${TOOL_NAME}-${ASDF_INSTALL_VERSION}-linux-"
+OP=$(uname -s)
+filename="${TOOL_NAME}-${ASDF_INSTALL_VERSION}"
+
+case $OP in
+Linux)
+	filename+='-linux-'
+	;;
+Darwin)
+	filename+='-darwin-'
+	;;
+*)
+	log_error "unsupported operating system $OP"
+	exit 1
+	;;
+esac
 
 case $ARCH in
 x86_64)
