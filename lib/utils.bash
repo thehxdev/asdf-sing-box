@@ -32,7 +32,7 @@ list_github_tags() {
 }
 
 list_github_api_versions() {
-	curl -s "https://api.github.com/repos/$GH_ORG_REPO/releases" | jq 'map(.name).[]' | tr -d '"'
+	curl "${curl_opts[@]}" "https://api.github.com/repos/$GH_ORG_REPO/releases" | jq 'map(.name).[]' | tr -d '"' | xargs echo
 }
 
 list_all_versions() {
